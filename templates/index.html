@@ -418,6 +418,11 @@ function goBackToEmail() {
   prepareEmail();
 }
 
+function showLockedResult() {
+  const score = calcScore();
+  renderResult(score, getTier(score), false);
+}
+
 function goHome() {
   activeTest = null; currentQ = 0; answers = [];
   document.getElementById('input-name').value = '';
@@ -477,7 +482,7 @@ function selectOption(index, btn) {
       renderQuestion();
     } else {
       document.getElementById('progress-fill').style.width = '100%';
-      setTimeout(() => prepareEmail(), 300);
+      setTimeout(() => showLockedResult(), 300);
     }
   }, 350);
 }
