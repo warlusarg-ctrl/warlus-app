@@ -297,6 +297,14 @@
   </div>
   <div class="score-label" id="score-label">—</div>
   <p class="score-desc" id="score-desc"></p>
+
+  <!-- LOCKED OVERLAY -->
+  <div id="locked-overlay" style="display:none;flex-direction:column;align-items:center;gap:10px;background:rgba(15,27,60,0.85);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:24px 20px;width:100%;max-width:440px;text-align:center;margin-bottom:24px">
+    <span style="font-size:28px">🔒</span>
+    <p style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;color:#fff;letter-spacing:1px">DESBLOQUEÁ TU ANÁLISIS COMPLETO</p>
+    <p style="font-size:13px;color:#8A94A6;line-height:1.5">Dejá tu nombre y mail para ver tu diagnóstico detallado y recomendaciones personalizadas.</p>
+    <button onclick="goBackToEmail()" style="background:#2E5BFF;color:#fff;border:none;border-radius:6px;padding:14px 32px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:15px;letter-spacing:2px;text-transform:uppercase;cursor:pointer;margin-top:4px">VER MI ANÁLISIS →</button>
+  </div>
   <div class="dim-bars" id="dim-bars"></div>
   <div class="insight-cards" id="insight-cards"></div>
   <div class="divider"></div>
@@ -406,6 +414,10 @@ let activeTest = null;
 let currentQ   = 0;
 let answers    = [];
 
+function goBackToEmail() {
+  prepareEmail();
+}
+
 function goHome() {
   activeTest = null; currentQ = 0; answers = [];
   document.getElementById('input-name').value = '';
@@ -497,12 +509,12 @@ function submitAndShow() {
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({ nombre, email, score, nivel: tier.label, test: activeTest })
   }).catch(() => {});
-  renderResult(score, tier);
+  renderResult(score, tier, true);
 }
 
 function showResult() {
   const score = calcScore();
-  renderResult(score, getTier(score));
+  renderResult(score, getTier(score), false);
 }
 
 function calcScore() {
@@ -515,7 +527,7 @@ function getTier(score) {
   return TESTS[activeTest].tiers.find(t => score >= t.min);
 }
 
-function renderResult(score, tier) {
+function renderResult(score, tier, withDetails) {
   const t = TESTS[activeTest];
   showScreen('screen-result');
   document.body.style.background = t.bgColor;
@@ -540,12 +552,22 @@ function renderResult(score, tier) {
 
   document.getElementById('score-label').textContent = tier.label;
   document.getElementById('score-label').style.color = tier.color;
-  document.getElementById('score-desc').textContent  = tier.desc;
+
+  // desc + insights only if user left email
+  if (withDetails) {
+    document.getElementById('score-desc').textContent = tier.desc;
+    document.getElementById('score-desc').style.display = 'block';
+    document.getElementById('locked-overlay').style.display = 'none';
+  } else {
+    document.getElementById('score-desc').textContent = '';
+    document.getElementById('score-desc').style.display = 'none';
+    document.getElementById('locked-overlay').style.display = 'flex';
+  }
 
   // barras dimensión (solo athlete)
   const barsWrap = document.getElementById('dim-bars');
   barsWrap.innerHTML = '';
-  if (t.dimMap) {
+  if (withDetails && t.dimMap) {
     Object.entries(t.dimMap).forEach(([dim, indices]) => {
       const dimA = indices.map(i => answers[i]).filter(Boolean);
       const dimScore = dimA.length ? Math.round(dimA.reduce((a,b) => a+b.score,0)/dimA.length*100) : 0;
@@ -565,6 +587,7 @@ function renderResult(score, tier) {
   // insight cards
   const cardsWrap = document.getElementById('insight-cards');
   cardsWrap.innerHTML = '';
+  if (!withDetails) { return; }
   const insights = activeTest === 'recovery' ? recoveryInsights() : activeTest === 'hydration' ? hydrationInsights() : [];
   insights.forEach(ins => {
     const card = document.createElement('div');
