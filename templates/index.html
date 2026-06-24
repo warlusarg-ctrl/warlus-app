@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WARLUS — Scores</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700;900&family=Barlow:wght@400;500;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --navy:#0F1B3C;--navy-mid:#1A2B52;--navy-deep:#0A1228;
+    --blue:#2E5BFF;--blue-light:#4A8CFF;
+    --gold:#C8A84B;--gold-light:#E8C96A;
+    --cyan:#00C2FF;--cyan-glow:rgba(0,194,255,0.15);
+    --green:#34C759;--orange:#FF9500;--danger:#FF3B30;
+    --white:#FFFFFF;--gray:#8A94A6;
+  }
+  html,body{min-height:100%;font-family:'Barlow',sans-serif;color:var(--white);-webkit-font-smoothing:antialiased;background:var(--navy)}
+  .screen{display:none;min-height:100vh;flex-direction:column;align-items:center;justify-content:center;padding:32px 24px;animation:fadeIn 0.4s ease}
+  .screen.active{display:flex}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+  .logo{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;letter-spacing:4px;color:var(--white);text-align:center;margin-bottom:6px}
+  .logo-mark{width:32px;height:40px;margin:0 auto 6px;display:block}
+  .tagline{font-size:10px;letter-spacing:3px;text-transform:uppercase;text-align:center;margin-bottom:36px}
+
+  /* SELECTOR */
+  .sel-headline{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(30px,8vw,48px);text-transform:uppercase;text-align:center;line-height:1.0;margin-bottom:12px;max-width:380px}
+  .sel-headline em{color:var(--blue-light);font-style:normal}
+  .sel-sub{font-size:14px;color:var(--gray);text-align:center;margin-bottom:40px;max-width:300px;line-height:1.6}
+  .cards{display:flex;flex-direction:column;gap:16px;width:100%;max-width:440px}
+  .card{background:var(--navy-mid);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:24px 20px;cursor:pointer;display:flex;align-items:center;gap:18px;transition:border-color 0.2s,background 0.2s,transform 0.15s;position:relative;overflow:hidden}
+  .card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:12px 0 0 12px}
+  .card:hover{border-color:rgba(255,255,255,0.2);background:#1E3060;transform:translateY(-2px)}
+  .card.recovery::before{background:var(--blue)}
+  .card.athlete::before{background:var(--green)}
+  .card.hydration::before{background:var(--cyan)}
+  .card-icon{font-size:32px;flex-shrink:0;width:48px;text-align:center}
+  .card-body{flex:1}
+  .card-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:20px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px}
+  .card.recovery .card-title{color:var(--blue-light)}
+  .card.athlete .card-title{color:var(--green)}
+  .card.hydration .card-title{color:var(--cyan)}
+  .card-desc{font-size:13px;color:var(--gray);line-height:1.4;margin-bottom:10px}
+  .card-meta{display:flex;gap:12px}
+  .meta-pill{font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;display:flex;align-items:center;gap:4px}
+  .meta-pill::before{content:'';width:4px;height:4px;border-radius:50%;background:currentColor}
+  .card-arrow{color:var(--gray);font-size:20px;flex-shrink:0;transition:color 0.2s,transform 0.2s}
+  .card:hover .card-arrow{color:var(--white);transform:translateX(4px)}
+  .sel-footer{margin-top:48px;text-align:center}
+  .sel-footer-line{width:40px;height:1px;background:rgba(255,255,255,0.1);margin:0 auto 16px}
+  .sel-footer-quote{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.2);line-height:1.6}
+
+  /* BUTTONS */
+  .btn-primary{background:var(--blue);color:var(--white);border:none;border-radius:6px;padding:18px 48px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:17px;letter-spacing:3px;text-transform:uppercase;cursor:pointer;width:100%;max-width:340px;transition:background 0.2s,transform 0.1s}
+  .btn-primary:hover{background:#1A40CC}
+  .btn-primary:active{transform:scale(0.98)}
+  .btn-primary.gold{background:var(--gold);color:var(--navy-deep)}
+  .btn-primary.gold:hover{background:var(--gold-light)}
+  .btn-primary.cyan{background:var(--cyan);color:var(--navy-deep)}
+  .btn-primary.cyan:hover{background:#33CFFF}
+  .btn-secondary{background:transparent;color:var(--gray);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:14px 48px;font-family:'Barlow',sans-serif;font-weight:500;font-size:14px;cursor:pointer;width:100%;max-width:340px;margin-top:12px;transition:border-color 0.2s}
+  .btn-secondary:hover{border-color:rgba(255,255,255,0.35);color:var(--white)}
+  .btn-home{background:transparent;color:var(--gray);border:none;font-size:13px;cursor:pointer;margin-top:20px;text-decoration:underline;text-underline-offset:3px}
+  .btn-home:hover{color:var(--white)}
+
+  /* PROGRESS */
+  .progress-bar-wrap{width:100%;max-width:440px;height:2px;background:rgba(255,255,255,0.08);margin-bottom:32px}
+  .progress-bar-fill{height:100%;transition:width 0.5s ease}
+  .progress-bar-fill.blue{background:var(--blue)}
+  .progress-bar-fill.gold{background:var(--gold)}
+  .progress-bar-fill.cyan{background:var(--cyan)}
+
+  .q-meta{display:flex;align-items:center;justify-content:space-between;width:100%;max-width:440px;margin-bottom:8px}
+  .q-counter{font-size:10px;color:var(--gray);letter-spacing:2px;text-transform:uppercase}
+  .q-dimension{font-size:10px;letter-spacing:2px;text-transform:uppercase}
+  .q-dimension.blue{color:var(--blue-light)}
+  .q-dimension.gold{color:var(--gold)}
+  .q-dimension.cyan{color:var(--cyan)}
+  .q-text{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(22px,6vw,32px);text-align:center;line-height:1.1;margin-bottom:12px;max-width:400px;text-transform:uppercase}
+  .q-hint{font-size:12px;color:var(--cyan);text-align:center;margin-bottom:24px;max-width:360px;line-height:1.5;font-style:italic}
+
+  .options{display:flex;flex-direction:column;gap:10px;width:100%;max-width:440px}
+  .option-btn{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:15px 18px;color:var(--white);font-family:'Barlow',sans-serif;font-size:14px;font-weight:500;cursor:pointer;text-align:left;transition:border-color 0.15s,background 0.15s;display:flex;align-items:center;gap:14px}
+  .option-btn.blue:hover{border-color:var(--blue);background:rgba(46,91,255,0.12)}
+  .option-btn.blue.selected{border-color:var(--blue);background:rgba(46,91,255,0.2)}
+  .option-btn.gold:hover{border-color:var(--gold);background:rgba(200,168,75,0.07)}
+  .option-btn.gold.selected{border-color:var(--gold);background:rgba(200,168,75,0.13)}
+  .option-btn.cyan:hover{border-color:var(--cyan);background:var(--cyan-glow)}
+  .option-btn.cyan.selected{border-color:var(--cyan);background:rgba(0,194,255,0.18)}
+  .option-letter{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,0.18);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;transition:background 0.15s,border-color 0.15s}
+  .option-btn.blue.selected .option-letter{background:var(--blue);border-color:var(--blue)}
+  .option-btn.gold.selected .option-letter{background:var(--gold);border-color:var(--gold);color:var(--navy-deep)}
+  .option-btn.cyan.selected .option-letter{background:var(--cyan);border-color:var(--cyan);color:var(--navy-deep)}
+
+  /* EMAIL */
+  .email-headline{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(28px,7vw,42px);text-align:center;text-transform:uppercase;line-height:1.1;margin-bottom:12px;max-width:360px}
+  .email-headline.blue em{color:var(--blue-light)}
+  .email-headline.gold em{color:var(--gold)}
+  .email-headline.cyan em{color:var(--cyan)}
+  .email-sub{color:var(--gray);font-size:14px;text-align:center;margin-bottom:32px;max-width:300px;line-height:1.5}
+  .input-wrap{width:100%;max-width:420px;margin-bottom:14px}
+  .input-wrap input{width:100%;background:var(--navy-mid);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:16px 18px;color:var(--white);font-family:'Barlow',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s}
+  .input-wrap input::placeholder{color:var(--gray)}
+  .input-wrap input:focus{border-color:var(--blue-light)}
+  .privacy-note{font-size:11px;color:var(--gray);text-align:center;margin-bottom:28px;max-width:300px}
+
+  /* RESULT */
+  .score-ring-wrap{position:relative;width:160px;height:160px;margin:0 auto 20px}
+  .score-ring-svg{width:160px;height:160px;transform:rotate(-90deg)}
+  .score-ring-bg{fill:none;stroke:rgba(255,255,255,0.07);stroke-width:7}
+  .score-ring-fill{fill:none;stroke-width:7;stroke-linecap:round;transition:stroke-dashoffset 1.3s cubic-bezier(0.4,0,0.2,1),stroke 0.5s}
+  .score-number{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .score-digit{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:52px;line-height:1}
+  .score-max{font-size:12px;color:var(--gray);letter-spacing:1px}
+  .score-label{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;letter-spacing:4px;text-transform:uppercase;text-align:center;margin-bottom:8px}
+  .score-desc{font-size:14px;color:var(--gray);text-align:center;max-width:320px;line-height:1.65;margin-bottom:24px}
+
+  .dim-bars{width:100%;max-width:440px;display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
+  .dim-bar-row{display:flex;flex-direction:column;gap:5px}
+  .dim-bar-header{display:flex;justify-content:space-between;align-items:center}
+  .dim-bar-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--gray);font-weight:600}
+  .dim-bar-pct{font-size:12px;color:var(--gold);font-weight:700}
+  .dim-bar-track{width:100%;height:4px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden}
+  .dim-bar-fill{height:100%;background:var(--gold);border-radius:2px;width:0%;transition:width 1.2s cubic-bezier(0.4,0,0.2,1)}
+
+  .insight-cards{width:100%;max-width:440px;display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+  .insight-card{background:var(--navy-mid);border-radius:8px;padding:14px 16px;display:flex;align-items:flex-start;gap:12px;border-left:3px solid transparent}
+  .insight-card.good{border-left-color:var(--green)}
+  .insight-card.warn{border-left-color:var(--orange)}
+  .insight-card.bad{border-left-color:var(--danger)}
+  .insight-icon{font-size:18px;flex-shrink:0;margin-top:1px}
+  .insight-text{font-size:13px;color:var(--gray);line-height:1.5}
+  .insight-text strong{color:var(--white);display:block;font-size:14px;margin-bottom:2px}
+
+  .fact-box{background:var(--cyan-glow);border:1px solid rgba(0,194,255,0.25);border-radius:6px;padding:14px 18px;max-width:360px;width:100%;margin-bottom:32px;text-align:center}
+  .fact-box p{font-size:13px;color:var(--cyan);line-height:1.6}
+  .fact-box strong{color:var(--white)}
+  .badge{display:inline-block;font-size:10px;letter-spacing:3px;text-transform:uppercase;padding:5px 14px;border-radius:2px;margin-bottom:20px}
+  .badge.gold{border:1px solid var(--gold);color:var(--gold)}
+  .badge.cyan{border:1px solid var(--cyan);color:var(--cyan)}
+  .dims{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;max-width:360px;margin-bottom:36px}
+  .dim-pill{background:rgba(200,168,75,0.08);border:1px solid rgba(200,168,75,0.25);border-radius:4px;padding:10px 12px;display:flex;align-items:center;gap:8px}
+  .dim-pill span{font-size:16px}
+  .dim-pill p{font-size:11px;color:var(--gold-light);letter-spacing:0.5px;text-transform:uppercase;font-weight:600}
+  .divider{width:100%;max-width:440px;height:1px;background:rgba(255,255,255,0.08);margin:8px 0 20px}
+  .share-note{font-size:11px;color:var(--gray);text-align:center;margin-top:12px;opacity:0.7}
+  .brand-footer{margin-top:36px;text-align:center}
+  .brand-footer .logo{font-size:18px;margin-bottom:4px}
+  .brand-footer p{font-size:11px;color:var(--gray);letter-spacing:1px;line-height:1.6}
+  .intro-headline{font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:clamp(34px,9vw,56px);line-height:0.95;text-align:center;text-transform:uppercase;margin-bottom:16px;max-width:420px}
+  .intro-headline em{font-style:normal}
+  .intro-headline.blue em{color:var(--blue-light)}
+  .intro-headline.gold em{color:var(--gold)}
+  .intro-headline.cyan em{color:var(--cyan)}
+  .intro-sub{font-size:14px;color:var(--gray);text-align:center;margin-bottom:32px;max-width:300px;line-height:1.6}
+  .pill-row{display:flex;gap:10px;margin-bottom:36px;flex-wrap:wrap;justify-content:center}
+  .pill{background:var(--navy-mid);border:1px solid rgba(46,91,255,0.3);border-radius:20px;padding:6px 14px;font-size:12px;color:var(--blue-light);letter-spacing:0.5px}
+</style>
+</head>
+<body>
+
+<!-- SELECTOR -->
+<div class="screen active" id="screen-selector">
+  <img class="logo-mark" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuoAAAQACAYAAAC3aHx4AAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAABtfSURBVHic7d1blhPHFkVR+Q7632XfD7swUK9MKR8rIuZsQYHiY7HHUfHX33///QAAAFr+d/cPAAAAvCfUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS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" alt="WARLUS"/>
+  <div class="logo">WARLUS</div>
+  <div class="tagline" style="color:var(--gray)">Recuperación · Rendimiento</div>
+  <h1 class="sel-headline">Descubrí<br>tu <em>score</em><br>hoy.</h1>
+  <p class="sel-sub">Tres tests. Tres dimensiones. Sabé exactamente dónde estás parado.</p>
+  <div class="cards">
+    <div class="card recovery" onclick="startTest('recovery')">
+      <div class="card-icon">🔄</div>
+      <div class="card-body">
+        <div class="card-title">Recovery Score</div>
+        <div class="card-desc">Cómo está tu recuperación real. Sueño, carga y hábitos activos.</div>
+        <div class="card-meta"><span class="meta-pill">5 preguntas</span><span class="meta-pill">45 segundos</span></div>
+      </div>
+      <div class="card-arrow">→</div>
+    </div>
+    <div class="card athlete" onclick="startTest('athlete')">
+      <div class="card-icon">⚡</div>
+      <div class="card-body">
+        <div class="card-title">Athlete Score</div>
+        <div class="card-desc">Qué tan atleta sos realmente. Mentalidad, consistencia y rendimiento.</div>
+        <div class="card-meta"><span class="meta-pill">7 preguntas</span><span class="meta-pill">60 segundos</span></div>
+      </div>
+      <div class="card-arrow">→</div>
+    </div>
+    <div class="card hydration" onclick="startTest('hydration')">
+      <div class="card-icon">💧</div>
+      <div class="card-body">
+        <div class="card-title">Hydration Score</div>
+        <div class="card-desc">¿Realmente estás hidratado? El 2% de deshidratación baja tu rendimiento 20%.</div>
+        <div class="card-meta"><span class="meta-pill">5 preguntas</span><span class="meta-pill">30 segundos</span></div>
+      </div>
+      <div class="card-arrow">→</div>
+    </div>
+  </div>
+  <div class="sel-footer">
+    <div class="sel-footer-line"></div>
+    <div class="sel-footer-quote">No gana el que más entrena.<br>Gana el que mejor se recupera.</div>
+  </div>
+</div>
+
+<!-- RECOVERY INTRO -->
+<div class="screen" id="screen-recovery-intro">
+  <img class="logo-mark" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuoAAAQACAYAAAC3aHx4AAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAABtfSURBVHic7d1blhPHFkVR+Q7632XfD7swUK9MKR8rIuZsQYHiY7HHUfHX33///QAAAFr+d/cPAAAAvCfUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS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" alt="WARLUS"/>
+  <div class="logo">WARLUS</div>
+  <div class="tagline" style="color:var(--gray)">Recuperación · Rendimiento</div>
+  <h1 class="intro-headline blue">¿Cómo estás<br><em>recuperándote</em><br>hoy?</h1>
+  <p class="intro-sub">5 preguntas. 45 segundos. Tu Recovery Score personalizado.</p>
+  <div class="pill-row">
+    <span class="pill">Sueño</span>
+    <span class="pill">Carga de entrenamiento</span>
+    <span class="pill">Recovery activo</span>
+  </div>
+  <button class="btn-primary" onclick="beginQuiz('recovery')">DESCUBRIR MI SCORE</button>
+  <button class="btn-home" onclick="goHome()">← Elegir otro test</button>
+</div>
+
+<!-- ATHLETE INTRO -->
+<div class="screen" id="screen-athlete-intro" style="background:var(--navy-deep)">
+  <img class="logo-mark" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuoAAAQACAYAAAC3aHx4AAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAABtfSURBVHic7d1blhPHFkVR+Q7632XfD7swUK9MKR8rIuZsQYHiY7HHUfHX33///QAAAFr+d/cPAAAAvCfUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS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" alt="WARLUS"/>
+  <div class="logo">WARLUS</div>
+  <div class="tagline" style="color:var(--gold)">Alto Rendimiento</div>
+  <div class="badge gold">Evaluación de Atleta</div>
+  <h1 class="intro-headline gold">¿Qué tan<br><em>atleta</em><br>sos realmente?</h1>
+  <p class="intro-sub">7 preguntas. 60 segundos. Descubrí tu nivel real en las 4 dimensiones que separan al atleta amateur del de alto rendimiento.</p>
+  <div class="dims">
+    <div class="dim-pill"><span>🧠</span><p>Mentalidad</p></div>
+    <div class="dim-pill"><span>🔁</span><p>Consistencia</p></div>
+    <div class="dim-pill"><span>⚡</span><p>Rendimiento</p></div>
+    <div class="dim-pill"><span>🌙</span><p>Recuperación</p></div>
+  </div>
+  <button class="btn-primary gold" onclick="beginQuiz('athlete')">DESCUBRIR MI ATHLETE SCORE</button>
+  <button class="btn-home" onclick="goHome()">← Elegir otro test</button>
+</div>
+
+<!-- HYDRATION INTRO -->
+<div class="screen" id="screen-hydration-intro" style="background:var(--navy-deep)">
+  <img class="logo-mark" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuoAAAQACAYAAAC3aHx4AAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAABtfSURBVHic7d1blhPHFkVR+Q7632XfD7swUK9MKR8rIuZsQYHiY7HHUfHX33///QAAAFr+d/cPAAAAvCfUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS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" alt="WARLUS"/>
+  <div class="logo">WARLUS</div>
+  <div class="tagline" style="color:var(--cyan)">Hidratación · Rendimiento</div>
+  <div class="badge cyan">Hydration Score</div>
+  <h1 class="intro-headline cyan">¿Estás<br>hidratado o<br><em>solo creés</em><br>que lo estás?</h1>
+  <p class="intro-sub">5 preguntas. 30 segundos. La mayoría de los atletas falla esto sin saberlo.</p>
+  <div class="fact-box">
+    <p>Una deshidratación del <strong>2%</strong> reduce el rendimiento físico hasta un <strong>20%</strong>.<br>Y la mayoría no lo siente hasta que ya es tarde.</p>
+  </div>
+  <button class="btn-primary cyan" onclick="beginQuiz('hydration')">DESCUBRIR MI HYDRATION SCORE</button>
+  <button class="btn-home" onclick="goHome()">← Elegir otro test</button>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="screen-quiz">
+  <div style="width:100%;max-width:440px">
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill blue" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+  <div class="q-meta">
+    <span class="q-counter" id="q-counter">PREGUNTA 1</span>
+    <span class="q-dimension blue" id="q-dimension"></span>
+  </div>
+  <div class="q-text" id="q-text"></div>
+  <div class="q-hint" id="q-hint" style="display:none"></div>
+  <div class="options" id="options-wrap"></div>
+  <button class="btn-home" onclick="goHome()" style="margin-top:24px">← Elegir otro test</button>
+</div>
+
+<!-- EMAIL -->
+<div class="screen" id="screen-email">
+  <img class="logo-mark" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAuoAAAQACAYAAAC3aHx4AAABWGlDQ1BJQ0MgUHJvZmlsZQAAeJx9kLFLw1AQxr9WpaB1EB0cHDKJQ5SSCro4tBVEcQhVweqUvqapkMZHkiIFN/+Bgv+BCs5uFoc6OjgIopPo5uSk4KLleS+JpCJ6j+N+fO+74zggOW5wbvcDqDu+W1zKK5ulLSX1jAS9IAzm8Zyur0r+rj/j/T703k7LWb///43Biukxqp+UGcZdH0ioxPqezyXvE4+5tBRxS7IV8onkcsjngWe9WCC+JlZYzagQvxCr5R7d6uG63WDRDnL7tOlsrMk5lBNYxA48cNgw0IQCHdk//LOBv4BdcjfhUp+FGnzqyZEiJ5jEy3DAMAOVWEOGUpN3ju53F91PjbWDJ2ChI4S4iLWVDnA2Rydrx9rUPDAyBFy1ueEagdRHmaxWgddTYLgEjN5Qz7ZXzWrh9uk8MPAoxNskkDoEui0hPo6E6B5T8wNw6XwBA6diE8HYWhMAABtfSURBVHic7d1blhPHFkVR+Q7632XfD7swUK9MKR8rIuZsQYHiY7HHUfHX33///QAAAFr+d/cPAAAAvCfUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS6gAAECTUAQAgSKgDAECQUAcAgCChDgAAQUIdAACChDoAAAQJdQAACBLqAAAQJNQBACBIqAMAQJBQBwCAIKEOAABBQh0AAIKEOgAABAl1AAAIEuoAABAk1AEAIEioAwBAkFAHAIAgoQ4AAEFCHQAAgoQ6AAAECXUAAAgS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" alt="WARLUS"/>
+  <div class="logo">WARLUS</div>
+  <h2 class="email-headline blue" id="email-headline">Tu score<br>está listo.</h2>
+  <p class="email-sub" id="email-sub">Dejá tu mail y te enviamos tu diagnóstico completo.</p>
+  <div class="input-wrap"><input type="text" id="input-name" placeholder="Tu nombre" autocomplete="given-name"/></div>
+  <div class="input-wrap"><input type="email" id="input-email" placeholder="Tu email" autocomplete="email"/></div>
+  <p class="privacy-note">Sin spam. Solo contenido de rendimiento.</p>
+  <button class="btn-primary" id="email-btn-primary" onclick="submitAndShow()">VER MI SCORE</button>
+  <button class="btn-secondary" onclick="showResult()">Ver sin guardar</button>
+</div>
+
+<!-- RESULTADO -->
+<div class="screen" id="screen-result">
+  <div class="logo">WARLUS</div>
+  <div class="tagline" id="result-tagline" style="color:var(--gray);margin-bottom:20px">Score</div>
+  <div class="score-ring-wrap">
+    <svg class="score-ring-svg" viewBox="0 0 160 160">
+      <circle class="score-ring-bg" cx="80" cy="80" r="68"/>
+      <circle class="score-ring-fill" id="ring-fill" cx="80" cy="80" r="68" stroke-dasharray="427" stroke-dashoffset="427"/>
+    </svg>
+    <div class="score-number">
+      <span class="score-digit" id="score-digit">0</span>
+      <span class="score-max">/ 100</span>
+    </div>
+  </div>
+  <div class="score-label" id="score-label">—</div>
+  <p class="score-desc" id="score-desc"></p>
+  <div class="dim-bars" id="dim-bars"></div>
+  <div class="insight-cards" id="insight-cards"></div>
+  <div class="divider"></div>
+  <button class="btn-primary" id="result-share-btn" onclick="shareScore()">COMPARTIR MI SCORE</button>
+  <button class="btn-secondary" onclick="goHome()">Hacer otro test</button>
+  <p class="share-note" id="result-share-note"></p>
+  <div class="brand-footer">
+    <div class="logo" style="margin-top:32px">WARLUS</div>
+    <p>No gana el que más entrena.<br>Gana el que mejor se recupera.</p>
+  </div>
+</div>
+
+<script>
+const SHEETS = {
+  recovery:  'https://script.google.com/macros/s/AKfycbxmUzo3yQ3dKhUWMHcuWBN8roIcF1FT0QkEX0Pgsj0yfMgTXDYlrZ5qfk8EJYHDj_X6/exec',
+  athlete:   'https://script.google.com/macros/s/AKfycbx9l5a09R12eGp6HRdqGNlJRy7vrFfgpHtAfU9kevfrzXolhE5xY9gTK0cDmBOrClau/exec',
+  hydration: 'https://script.google.com/macros/s/AKfycbyQE3OdwrJCjxAb0lBE0zLI9M9z3fkfShf9d7ZLV4gDXn3pl9pL-0Jni4BSt59h0RdFqQ/exec',
+};
+
+const TESTS = {
+  recovery: {
+    color:'blue', bgColor:'var(--navy)', tagline:'Recovery Score',
+    emailTitle:'Tu <em>Recovery Score</em> está listo.',
+    emailSub:'Dejá tu mail y te enviamos tu diagnóstico con recomendaciones personalizadas.',
+    shareNote:'¿Cuál es el score de tu equipo?',
+    questions:[
+      {text:"¿CUÁNTAS HORAS DORMÍS\nPOR NOCHE EN PROMEDIO?",weight:0.35,dimension:'SUEÑO',
+        options:[{label:"Menos de 5 horas",score:0},{label:"5 a 6 horas",score:0.4},{label:"7 a 8 horas",score:1.0},{label:"Más de 8 horas",score:0.8}]},
+      {text:"¿CÓMO DESCRIBÍS\nLA CALIDAD DE TU SUEÑO?",weight:0.15,dimension:'SUEÑO',
+        options:[{label:"Me despierto descansado y listo",score:1.0},{label:"Me cuesta un poco arrancar",score:0.65},{label:"Me despierto varias veces",score:0.3},{label:"Duermo mal, me levanto agotado",score:0.0}]},
+      {text:"¿CUÁNTOS DÍAS POR\nSEMANA ENTRENÁS?",weight:0.15,dimension:'ENTRENAMIENTO',
+        options:[{label:"1 a 2 días",score:0.5},{label:"3 a 4 días",score:1.0},{label:"5 a 6 días",score:0.7},{label:"Todos los días",score:0.3}]},
+      {text:"¿USÁS ALGUNA PRÁCTICA\nDE RECUPERACIÓN ACTIVA?",weight:0.20,dimension:'RECOVERY',
+        options:[{label:"Ninguna",score:0.0},{label:"Stretching o movilidad",score:0.5},{label:"Baño frío, sauna o calor",score:0.8},{label:"Suplementación o nutrición específica",score:1.0}]},
+      {text:"¿CÓMO LLEGÁS AL DÍA\nSIGUIENTE DE ENTRENAR?",weight:0.15,dimension:'FATIGA',
+        options:[{label:"Listo para volver sin problema",score:1.0},{label:"Con algo de fatiga manejable",score:0.65},{label:"Con dolor muscular fuerte",score:0.3},{label:"Agotado, necesito más de un día",score:0.0}]}
+    ],
+    tiers:[
+      {min:90,label:"LISTO PARA COMPETIR",color:"#2E5BFF",desc:"Tu recuperación está al nivel de un atleta profesional. Tus hábitos sostienen el rendimiento. Seguí así y considerá optimizar con suplementación específica."},
+      {min:75,label:"BUENA RECUPERACIÓN",color:"#34C759",desc:"Estás recuperando bien. Hay margen para crecer si ajustás uno o dos hábitos clave. Un protocolo más estructurado puede llevarte al siguiente nivel."},
+      {min:60,label:"TODAVÍA TENÉS MARGEN",color:"#FF9500",desc:"Tu recuperación es funcional pero no óptima. Pequeños cambios en sueño y rutinas activas pueden tener un impacto grande en tu rendimiento."},
+      {min:40,label:"TU RECUPERACIÓN TE LIMITA",color:"#FF6B00",desc:"Estás entrenando más de lo que te recuperás. Eso frena tu progreso y aumenta el riesgo de lesión. Es momento de priorizar la recuperación."},
+      {min:0,label:"NO ESTÁS RECUPERANDO",color:"#FF3B30",desc:"Tu cuerpo está en deuda de recuperación. Si seguís sin cambios, el rendimiento va a caer y el riesgo de lesión es alto. Empezá por el sueño."}
+    ]
+  },
+
+  athlete: {
+    color:'gold', bgColor:'var(--navy-deep)', tagline:'Athlete Score',
+    emailTitle:'Tu <em>Athlete Score</em> está listo.',
+    emailSub:'Dejá tu mail y recibís tu análisis completo con el desglose por dimensión y tu plan de mejora.',
+    shareNote:'Retá a tu equipo — ¿quién llega a Elite?',
+    dimMap:{'MENTALIDAD':[0,1],'CONSISTENCIA':[2,3],'RENDIMIENTO':[4],'RECUPERACIÓN':[5,6]},
+    dimIcons:{'MENTALIDAD':'🧠','CONSISTENCIA':'🔁','RENDIMIENTO':'⚡','RECUPERACIÓN':'🌙'},
+    questions:[
+      {text:"¿QUÉ HACÉS CUANDO\nFALLÁS UN ENTRENAMIENTO?",weight:0.14,dimension:'MENTALIDAD',
+        options:[{label:"Lo compenso al día siguiente aunque no toque",score:0.2},{label:"Me frustra, pero sigo adelante",score:0.6},{label:"Lo analizo para entender por qué pasó",score:0.9},{label:"Lo registro y ajusto el plan de la semana",score:1.0}]},
+      {text:"¿QUÉ HACÉS CUANDO SENTÍS\nQUE ENTRENÁS MUCHO Y NO AVANZÁS?",weight:0.14,dimension:'MENTALIDAD',
+        options:[{label:"Me desespero y cambio todo",score:0.1},{label:"Entreno más duro para salir de ahí",score:0.4},{label:"Espero que pase sola con el tiempo",score:0.3},{label:"Busco qué variable cambiar (volumen, recovery, nutrición)",score:1.0}]},
+      {text:"¿CUÁNTAS SEMANAS SEGUIDAS\nENTRENASTE SIN ROMPER EL PLAN?",weight:0.14,dimension:'CONSISTENCIA',
+        options:[{label:"Menos de 2 semanas",score:0.1},{label:"2 a 4 semanas",score:0.4},{label:"1 a 3 meses",score:0.75},{label:"Más de 3 meses",score:1.0}]},
+      {text:"¿ENTRENÁS CON OBJETIVOS\nMEDIBLES O POR SENSACIÓN?",weight:0.14,dimension:'CONSISTENCIA',
+        options:[{label:"Por sensación, lo que puedo ese día",score:0.2},{label:"Tengo una idea general pero no lo mido",score:0.5},{label:"Tengo objetivos pero sin seguimiento sistemático",score:0.75},{label:"Registro series, tiempos, cargas y evolución",score:1.0}]},
+      {text:"¿CÓMO PERIODIZÁS\nTU CARGA DE ENTRENAMIENTO?",weight:0.14,dimension:'RENDIMIENTO',
+        options:[{label:"No lo hago, entreno lo mismo siempre",score:0.1},{label:"Subo la intensidad cuando me siento bien",score:0.4},{label:"Alterno semanas fuerte y liviana intuitivamente",score:0.7},{label:"Tengo ciclos planificados de carga y descarga",score:1.0}]},
+      {text:"¿CUÁNTAS PRÁCTICAS DE RECOVERY\nAPLICÁS DE FORMA REGULAR?",weight:0.15,dimension:'RECUPERACIÓN',
+        options:[{label:"Ninguna de forma sistemática",score:0.0},{label:"1 práctica (stretching o sueño cuidado)",score:0.4},{label:"2 prácticas (temperatura + nutrición o similar)",score:0.75},{label:"3 o más (sueño + temperatura + nutrición + movilidad)",score:1.0}]},
+      {text:"¿CÓMO LLEGÁS A UN MESO CICLO\nDE ALTA INTENSIDAD?",weight:0.15,dimension:'RECUPERACIÓN',
+        options:[{label:"Agotado antes de que empiece",score:0.0},{label:"Bien pero sé que el final se me va a hacer difícil",score:0.4},{label:"Fresco y listo para rendir al tope",score:0.85},{label:"Fui aumentando la carga gradualmente y llego óptimo",score:1.0}]}
+    ],
+    tiers:[
+      {min:90,label:"ELITE",color:"#C8A84B",desc:"Operás al nivel de un atleta de alto rendimiento. Tus cuatro dimensiones están alineadas. El margen de mejora está en los detalles y en sostener el nivel en el tiempo."},
+      {min:75,label:"COMPETIDOR",color:"#4A8CFF",desc:"Tenés la estructura y la mentalidad de un atleta serio. Hay una o dos dimensiones que, si las optimizás, te llevan al nivel Elite."},
+      {min:58,label:"EN DESARROLLO",color:"#34C759",desc:"Estás construyendo los cimientos correctos. Tu potencial es alto pero tu techo actual está limitado por inconsistencias en uno o más pilares clave."},
+      {min:38,label:"AMATEUR CONSCIENTE",color:"#FF9500",desc:"Tenés la motivación, pero te faltan sistemas. Sin estructura en entrenamiento y recuperación, el esfuerzo no se convierte en progreso real."},
+      {min:0,label:"PUNTO DE PARTIDA",color:"#FF3B30",desc:"Todos los grandes atletas empezaron acá. La diferencia es que ahora sabés exactamente dónde estás parado. Eso ya es una ventaja."}
+    ]
+  },
+
+  hydration: {
+    color:'cyan', bgColor:'var(--navy-deep)', tagline:'Hydration Score',
+    emailTitle:'Tu <em>Hydration Score</em> está listo.',
+    emailSub:'Dejá tu mail y desbloqueás tu diagnóstico completo con el plan de hidratación personalizado.',
+    shareNote:'¿Tu equipo sabe cuánto le cuesta estar deshidratado?',
+    questions:[
+      {text:"¿CUÁNTOS LITROS DE AGUA\nTOMÁS POR DÍA?",weight:0.25,dimension:'CANTIDAD',hint:"Contá solo agua — no café, no mate, no jugos.",
+        options:[{label:"Menos de 1 litro",score:0.0},{label:"Entre 1 y 1.5 litros",score:0.4},{label:"Entre 1.5 y 2.5 litros",score:0.8},{label:"Más de 2.5 litros",score:1.0}]},
+      {text:"¿CUÁNDO TOMÁS AGUA\nEN RELACIÓN AL ENTRENAMIENTO?",weight:0.20,dimension:'TIMING',hint:"Sé honesto — lo que hacés realmente, no lo ideal.",
+        options:[{label:"Solo cuando tengo sed durante el entreno",score:0.1},{label:"Antes y durante, pero me olvido después",score:0.5},{label:"Antes, durante y después de forma consciente",score:0.85},{label:"Tengo un protocolo: horarios y cantidades definidas",score:1.0}]},
+      {text:"¿CÓMO SABÉS QUE\nESTÁS DESHIDRATADO?",weight:0.20,dimension:'SEÑALES',hint:"La sed es la última señal — cuando la sentís, ya perdiste rendimiento.",
+        options:[{label:"Cuando tengo sed",score:0.0},{label:"Cuando me duele la cabeza o me mareo",score:0.2},{label:"Controlo el color de la orina",score:0.85},{label:"Peso antes y después del entreno para calcular pérdida",score:1.0}]},
+      {text:"¿CUÁNTOS MATES O CAFÉS\nTOMÁS POR DÍA?",weight:0.20,dimension:'INTERFERENCIAS',hint:"Cada mate o café requiere compensar con agua extra.",
+        options:[{label:"Más de 6",score:0.0},{label:"Entre 4 y 6",score:0.35},{label:"Entre 2 y 3",score:0.7},{label:"1 o ninguno",score:1.0}]},
+      {text:"¿AJUSTÁS TU HIDRATACIÓN\nCUANDO HACE CALOR O ENTRENÁS MÁS DURO?",weight:0.15,dimension:'ACTIVIDAD',hint:"En días de calor o alta intensidad la pérdida de líquido se duplica.",
+        options:[{label:"No, tomo lo mismo siempre",score:0.0},{label:"Tomo un poco más pero sin criterio",score:0.4},{label:"Sí, aumento el agua en esos días",score:0.8},{label:"Calculo en base a sudoración y temperatura",score:1.0}]}
+    ],
+    tiers:[
+      {min:85,label:"HIDRATACIÓN ÓPTIMA",color:"#00C2FF",desc:"Tu protocolo de hidratación está al nivel de un atleta profesional. Sos parte del 10% que realmente lo hace bien."},
+      {min:65,label:"BIEN HIDRATADO",color:"#34C759",desc:"Tenés buenos hábitos pero hay margen para optimizar. Un ajuste en timing o en compensar el mate puede darte un 10% más de rendimiento."},
+      {min:45,label:"HIDRATACIÓN PARCIAL",color:"#FF9500",desc:"Te hidratás, pero de forma inconsistente. Probablemente entrenás en un estado de deshidratación leve sin saberlo."},
+      {min:25,label:"EN DEUDA HÍDRICA",color:"#FF6B00",desc:"Tu cuerpo está operando con déficit de agua de forma crónica. Eso impacta directo en fuerza, resistencia y recuperación."},
+      {min:0,label:"DESHIDRATADO",color:"#FF3B30",desc:"Tu rendimiento está siendo limitado seriamente por la falta de agua. Este es el cambio de hábito con mayor impacto inmediato que podés hacer."}
+    ]
+  }
+};
+
+let activeTest = null;
+let currentQ   = 0;
+let answers    = [];
+
+function goHome() {
+  activeTest = null; currentQ = 0; answers = [];
+  document.getElementById('input-name').value = '';
+  document.getElementById('input-email').value = '';
+  document.body.style.background = 'var(--navy)';
+  showScreen('screen-selector');
+}
+
+function startTest(testName) {
+  activeTest = testName;
+  currentQ = 0; answers = [];
+  document.body.style.background = TESTS[testName].bgColor;
+  showScreen('screen-' + testName + '-intro');
+}
+
+function beginQuiz(testName) {
+  activeTest = testName;
+  currentQ = 0; answers = [];
+  const fill = document.getElementById('progress-fill');
+  fill.className = 'progress-bar-fill ' + TESTS[testName].color;
+  showScreen('screen-quiz');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const t = TESTS[activeTest];
+  const q = t.questions[currentQ];
+  const pct = (currentQ / t.questions.length) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('q-counter').textContent = `PREGUNTA ${currentQ+1} DE ${t.questions.length}`;
+  const dimEl = document.getElementById('q-dimension');
+  dimEl.textContent = q.dimension || '';
+  dimEl.className = 'q-dimension ' + t.color;
+  document.getElementById('q-text').textContent = q.text;
+  const hintEl = document.getElementById('q-hint');
+  if (q.hint) { hintEl.textContent = q.hint; hintEl.style.display = 'block'; }
+  else { hintEl.style.display = 'none'; }
+  const wrap = document.getElementById('options-wrap');
+  wrap.innerHTML = '';
+  ['A','B','C','D'].forEach((letter, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn ' + t.color;
+    btn.innerHTML = `<span class="option-letter">${letter}</span>${q.options[i].label}`;
+    btn.onclick = () => selectOption(i, btn);
+    wrap.appendChild(btn);
+  });
+}
+
+function selectOption(index, btn) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  setTimeout(() => {
+    const q = TESTS[activeTest].questions[currentQ];
+    answers.push({ score: q.options[index].score, weight: q.weight, dim: q.dimension });
+    currentQ++;
+    if (currentQ < TESTS[activeTest].questions.length) {
+      renderQuestion();
+    } else {
+      document.getElementById('progress-fill').style.width = '100%';
+      setTimeout(() => prepareEmail(), 300);
+    }
+  }, 350);
+}
+
+function prepareEmail() {
+  const t = TESTS[activeTest];
+  document.getElementById('email-headline').innerHTML = t.emailTitle;
+  document.getElementById('email-headline').className = 'email-headline ' + t.color;
+  document.getElementById('email-sub').textContent = t.emailSub;
+  const btn = document.getElementById('email-btn-primary');
+  btn.className = 'btn-primary' + (t.color !== 'blue' ? ' ' + t.color : '');
+  btn.textContent = 'VER MI ' + t.tagline.toUpperCase();
+  showScreen('screen-email');
+}
+
+function submitAndShow() {
+  const email = document.getElementById('input-email').value.trim();
+  if (!email) {
+    const inp = document.getElementById('input-email');
+    inp.style.borderColor = '#FF3B30';
+    inp.placeholder = 'Ingresá tu email para continuar';
+    return;
+  }
+  const nombre = document.getElementById('input-name').value.trim();
+  const score  = calcScore();
+  const tier   = getTier(score);
+  fetch('/submit', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ nombre, email, score, nivel: tier.label, test: activeTest })
+  }).catch(() => {});
+  renderResult(score, tier);
+}
+
+function showResult() {
+  const score = calcScore();
+  renderResult(score, getTier(score));
+}
+
+function calcScore() {
+  const weighted = answers.reduce((acc,a) => acc + a.score * a.weight, 0);
+  const maxPoss  = answers.reduce((acc,a) => acc + a.weight, 0);
+  return Math.round((weighted / maxPoss) * 100);
+}
+
+function getTier(score) {
+  return TESTS[activeTest].tiers.find(t => score >= t.min);
+}
+
+function renderResult(score, tier) {
+  const t = TESTS[activeTest];
+  showScreen('screen-result');
+  document.body.style.background = t.bgColor;
+  document.getElementById('result-tagline').textContent = t.tagline;
+  document.getElementById('result-share-note').textContent = t.shareNote;
+
+  const circumference = 427;
+  setTimeout(() => {
+    const ring = document.getElementById('ring-fill');
+    ring.style.stroke = tier.color;
+    ring.style.strokeDashoffset = circumference - (score/100)*circumference;
+  }, 120);
+
+  let current = 0;
+  const el = document.getElementById('score-digit');
+  el.style.color = tier.color;
+  const interval = setInterval(() => {
+    current = Math.min(current + (score/75), score);
+    el.textContent = Math.round(current);
+    if (current >= score) clearInterval(interval);
+  }, 16);
+
+  document.getElementById('score-label').textContent = tier.label;
+  document.getElementById('score-label').style.color = tier.color;
+  document.getElementById('score-desc').textContent  = tier.desc;
+
+  // barras dimensión (solo athlete)
+  const barsWrap = document.getElementById('dim-bars');
+  barsWrap.innerHTML = '';
+  if (t.dimMap) {
+    Object.entries(t.dimMap).forEach(([dim, indices]) => {
+      const dimA = indices.map(i => answers[i]).filter(Boolean);
+      const dimScore = dimA.length ? Math.round(dimA.reduce((a,b) => a+b.score,0)/dimA.length*100) : 0;
+      const row = document.createElement('div');
+      row.className = 'dim-bar-row';
+      row.innerHTML = `
+        <div class="dim-bar-header">
+          <span class="dim-bar-label">${t.dimIcons[dim]} ${dim}</span>
+          <span class="dim-bar-pct">${dimScore}</span>
+        </div>
+        <div class="dim-bar-track"><div class="dim-bar-fill" id="bar-${dim}"></div></div>`;
+      barsWrap.appendChild(row);
+      setTimeout(() => { document.getElementById('bar-'+dim).style.width = dimScore+'%'; }, 300);
+    });
+  }
+
+  // insight cards
+  const cardsWrap = document.getElementById('insight-cards');
+  cardsWrap.innerHTML = '';
+  const insights = activeTest === 'recovery' ? recoveryInsights() : activeTest === 'hydration' ? hydrationInsights() : [];
+  insights.forEach(ins => {
+    const card = document.createElement('div');
+    card.className = `insight-card ${ins.type}`;
+    card.innerHTML = `<span class="insight-icon">${ins.icon}</span><div class="insight-text"><strong>${ins.title}</strong>${ins.body}</div>`;
+    cardsWrap.appendChild(card);
+  });
+}
+
+function recoveryInsights() {
+  const sleepScore    = answers[0]?.score ?? 0;
+  const recoveryScore = answers[3]?.score ?? 0;
+  const fatigueScore  = answers[4]?.score ?? 0;
+  const ins = [];
+  if (sleepScore >= 0.9)      ins.push({type:'good',icon:'🌙',title:'Sueño optimizado',body:'Dormís las horas necesarias para que tu cuerpo repare el tejido muscular y consolide el rendimiento.'});
+  else if (sleepScore >= 0.5) ins.push({type:'warn',icon:'🌙',title:'Sueño mejorable',body:'Agregar 30-60 minutos de sueño puede mejorar tu recuperación hasta un 20%.'});
+  else                        ins.push({type:'bad',icon:'🌙',title:'Sueño insuficiente',body:'El sueño es el pilar más importante de la recuperación. Sin él, ningún otro método funciona al máximo.'});
+  if (recoveryScore >= 0.8)      ins.push({type:'good',icon:'⚡',title:'Recovery activo presente',body:'Tenés hábitos de recuperación que marcan diferencia. Considerá estructurarlos en un protocolo consistente.'});
+  else if (recoveryScore >= 0.4) ins.push({type:'warn',icon:'⚡',title:'Recovery parcial',body:'Tu rutina de recuperación activa puede ser más completa. Sumá temperatura (frío/calor) o suplementación.'});
+  else                           ins.push({type:'bad',icon:'⚡',title:'Sin recovery activo',body:'Sin prácticas de recuperación activa, tu cuerpo tarda más en volver al 100%. Es el cambio con mayor impacto inmediato.'});
+  if (fatigueScore >= 0.8) ins.push({type:'good',icon:'💪',title:'Fatiga bien gestionada',body:'Tu cuerpo absorbe la carga de entrenamiento correctamente. Buen equilibrio entre estrés y recuperación.'});
+  else                     ins.push({type:'warn',icon:'💪',title:'Fatiga acumulada',body:'La fatiga que arrastrás entre sesiones es señal de que la recuperación no alcanza a compensar el entrenamiento.'});
+  return ins;
+}
+
+function hydrationInsights() {
+  const qty    = answers[0]?.score ?? 0;
+  const signals= answers[2]?.score ?? 0;
+  const interf = answers[3]?.score ?? 0;
+  const ins = [];
+  if (qty >= 0.8)      ins.push({type:'good',icon:'💧',title:'Cantidad correcta',body:'Tomás el volumen de agua adecuado para sostener el rendimiento y la recuperación.'});
+  else if (qty >= 0.4) ins.push({type:'warn',icon:'💧',title:'Cantidad mejorable',body:'Estás cerca pero te falta volumen. Sumá un vaso de agua al despertar y uno antes de dormir.'});
+  else                 ins.push({type:'bad',icon:'💧',title:'Volumen insuficiente',body:'Tomás menos agua de la que tu cuerpo necesita para funcionar. Este es el cambio #1 a hacer.'});
+  if (signals >= 0.8) ins.push({type:'good',icon:'🔍',title:'Monitoreás bien las señales',body:'Controlás indicadores objetivos de hidratación. La mayoría no llega a este nivel.'});
+  else                ins.push({type:'warn',icon:'🔍',title:'Esperás la sed para tomar',body:'La sed aparece cuando ya perdiste entre 1% y 2% de tu peso en agua — demasiado tarde para el rendimiento.'});
+  if (interf <= 0.35)     ins.push({type:'bad',icon:'☕',title:'El mate/café te deshidrata',body:'Cada mate o café requiere compensar con agua extra. Con tu consumo actual, estás en deuda hídrica sin saberlo.'});
+  else if (interf <= 0.7) ins.push({type:'warn',icon:'☕',title:'Compensá el mate',body:'Tu consumo de mate/café es manejable, pero acordate de sumar agua extra para compensar el efecto diurético.'});
+  else                    ins.push({type:'good',icon:'☕',title:'Interferencias controladas',body:'Tu consumo de diuréticos es bajo. Eso facilita mantener un estado de hidratación estable.'});
+  return ins;
+}
+
+function shareScore() {
+  const score = document.getElementById('score-digit').textContent;
+  const label = document.getElementById('score-label').textContent;
+  const t     = TESTS[activeTest];
+  const url   = window.location.href;
+  const text  = `Mi WARLUS ${t.tagline} es ${score}/100 — ${label}.\nNo gana el que más entrena, gana el que mejor se recupera. 🦭`;
+  if (navigator.share) {
+    navigator.share({title:'WARLUS '+t.tagline, text, url}).catch(()=>{});
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(text+'\n'+url).then(()=>alert('¡Copiado! Pegalo en tu story.'));
+  } else {
+    alert(text+'\n'+url);
+  }
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>
